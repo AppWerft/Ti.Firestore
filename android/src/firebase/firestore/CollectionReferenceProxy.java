@@ -216,26 +216,22 @@ public class CollectionReferenceProxy extends KrollProxy {
 				snap.addOnCompleteListener(new onComplete());
 				break;
 			case LISTEN:
-				snap.addSnapshotListener(
-								new EventListener<DocumentSnapshot>() {
-									@Override
-									public void onEvent(
-											@Nullable DocumentSnapshot snapshot,
-											@Nullable FirebaseFirestoreException e) {
-										if (e != null) {
-											Log.w(LCAT, "Listen failed.", e);
-											return;
-										}
+				snap.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+					@Override
+					public void onEvent(@Nullable DocumentSnapshot snapshot,
+							@Nullable FirebaseFirestoreException e) {
+						if (e != null) {
+							Log.w(LCAT, "Listen failed.", e);
+							return;
+						}
 
-										if (snapshot != null
-												&& snapshot.exists()) {
-											Log.d(LCAT, "Current data: "
-													+ snapshot.getData());
-										} else {
-											Log.d(LCAT, "Current data: null");
-										}
-									}
-								});
+						if (snapshot != null && snapshot.exists()) {
+							Log.d(LCAT, "Current data: " + snapshot.getData());
+						} else {
+							Log.d(LCAT, "Current data: null");
+						}
+					}
+				});
 				break;
 			}
 			return;
