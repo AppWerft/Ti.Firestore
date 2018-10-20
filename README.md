@@ -1,106 +1,69 @@
-Appcelerator Titanium Mobile Module Project
+Ti.Firestore
 ===========================================
-
-This is a skeleton Titanium Mobile Mobile module project.
-
-
-MODULE NAMING
--------------
-
-Choose a unique module id for your module.  This ID usually follows a namespace
-convention using DNS notation.  For example, com.appcelerator.module.test.  This
-ID can only be used once by all public modules in Titanium.
+![](https://raw.githubusercontent.com/hansemannn/titanium-firebase/master/titanium-firebase-logo%402x.png)
 
 
-GET STARTED
-------------
+This module is part of [Firebase in Appcelerator Titanium](https://github.com/hansemannn/titanium-firebase) maintained by [hansemann](https://github.com/hansemannn)
 
-1. Edit manifest with the appropriate details about your module.
-2. Edit LICENSE to add your license details.
-3. Place any assets (such as PNG files) that are required anywhere in the module folder.
-4. Edit the timodule.json and configure desired settings.
-5. Code and build.
+Lets beginn:
 
+## Preparation
+Go to Firebase console adn add a project and your app. Then you have to add the firestore part. In the end you have tp move the downloaded json file to Resources folder of your app.
 
-DOCUMENTATION FOR YOUR MODULE
------------------------------
+## Costs
 
-You should provide at least minimal documentation for your module in `documentation` folder using the Markdown syntax.
+It is tollfree upto 20000/day and 1GB data and 10GB traffic.
 
-For more information on the Markdown syntax, refer to this documentation at:
+## Usage 
 
-<http://daringfireball.net/projects/markdown/>
+### Initialization
 
+```javascript
+// import of configuration and start:
+require('firebase.core').configure;
 
-TEST HARNESS EXAMPLE FOR YOUR MODULE
-------------------------------------
+const Firestore = require('firebase.firestore');
+Firestore.connect();
+```
 
-The `example` directory contains a skeleton application test harness that can be
-used for testing and providing an example of usage to the users of your module.
+### Add data
 
+Cloud Firestore stores data in Documents, which are stored in Collections. Cloud Firestore creates collections and documents implicitly the first time you add data to the document. You do not need to explicitly create collections or documents.
 
-BUILDING YOUR MODULE
---------------------
+Create a new collection and a document using the following example code.
 
-Simply run `titanium build --platform <name of platform> --build-type production --dir /path/to/module`.
-You can omit the --dir option if your working directory is in the module's project directory.
+```
+const user = Firestore.createCollection('users');
 
+// Create a new user with a first, middle, and last name
+users.add({
+	"first" : "Ada",
+	"last" : "Miller",
+	"born" :  1962
+	},function(e) {
+	console.log(e);
+});
+```
 
-INSTALL YOUR MODULE
--------------------
+Now add another document to the users collection. Notice that this document includes a key-value pair (middle name) that does not appear in the first document. Documents in a collection can contain different sets of information.
 
-Mac OS X
---------
-Copy the distribution zip file into the `~/Library/Application Support/Titanium` folder
+```
+users.add({
+    "first" : "Alan",
+    "middle" :  "Mathison",
+    "last" : "Turing",
+    "born" :  1912
+    },function(e) {
+    console.log(e);
+});
+```
 
-Linux
------
-Copy the distribution zip file into the `~/.titanium` folder
+### Read data
 
-Windows
--------
-Copy the distribution zip file into the `C:\ProgramData\Titanium` folder
+```
+Firestore.get('users',onComplete);
+function onComplete(e) {
+	console.log(e);
+}
 
-
-REGISTER YOUR MODULE
---------------------
-
-Register your module with your application by editing `tiapp.xml` and adding your module.
-Example:
-
-<modules>
-	<module version="0.1">firebase.firestore</module>
-</modules>
-
-When you run your project, the compiler will combine your module along with its dependencies
-and assets into the application.
-
-
-USING YOUR MODULE IN CODE
--------------------------
-
-To use your module in code, you will need to require it.
-
-For example,
-
-	var my_module = require('firebase.firestore');
-	my_module.foo();
-
-
-TESTING YOUR MODULE
--------------------
-
-To test with the script, execute:
-
-	titanium run --dir=YOURMODULEDIR
-
-This will execute the app.js in the example folder as a Titanium application.
-
-
-DISTRIBUTING YOUR MODULE
--------------------------
-
-You can choose to manually distribute your module distribution zip file or through the Titanium Marketplace!
-
-
-Cheers!
+```
