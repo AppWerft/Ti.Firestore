@@ -86,9 +86,14 @@ To update some fields of a document without overwriting the entire document, use
 
 ### Read data
 
-```
-users.get(null,onComplete);
+The following example shows how to retrieve the contents of a single document using get():
 
+```
+user.get(id, onComplete);
+```
+
+
+```
 user.get({
 	where : {
 		born : "≥1820",
@@ -112,7 +117,7 @@ users.listen({
 
 ### Delete data
 
-
+To delete a document, use the delete() method:
 ```
 users.delete(id,onComplete);
 ```
