@@ -35,14 +35,15 @@ Create a new collection and a document using the following example code.
 ```
 const users = Firestore.createCollection('users');
 
+function onComplete(e) {
+	console.log(e);
+}
 // Create a new user with a first, middle, and last name
 users.add({
 	"first" : "Ada",
 	"last" : "Miller",
 	"born" :  1962
-	},function(e) {
-	console.log(e);
-});
+ },	onComplete);
 ```
 
 Now add another document to the users collection. Notice that this document includes a key-value pair (middle name) that does not appear in the first document. Documents in a collection can contain different sets of information.
@@ -53,17 +54,13 @@ users.add({
     "middle" :  "Mathison",
     "last" : "Turing",
     "born" :  1912
-    },function(e) {
-    console.log(e);
-});
+    },	onComplete);
 ```
 
 ### Read data
 
 ```
 users.get(onComplete);
-function onComplete(e) {
-	console.log(e);
-}
+
 
 ```
