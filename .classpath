@@ -13,5 +13,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/Users/fuerst/Documents/MLearning/Ti.Firestore/android/classpathlibs/firestore17.1.1.jar"/>
+	<classpathentry kind="lib" path="/Users/fuerst/Documents/MLearning/Ti.Firestore/android/classpathlibs/fb_servicetasks.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

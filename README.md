@@ -66,8 +66,30 @@ users.add({
 ### Read data
 
 ```
-users.get(onComplete);
+users.get(null,onComplete);
+
+user.get({
+	where : {
+		born : "≥1820",
+		first : "=Alan"
+	}	
+},onComplete);
 ```
+
+### Listen data (realtime)
+
+```
+user.listen({
+	where : {
+		born : "≥1820",
+		first : "=Alan"
+	},
+	limit : 1,
+	orderBy : born
+},onComplete);
+```
+
+
 
 ### Secure your data
 
