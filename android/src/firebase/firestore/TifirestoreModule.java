@@ -20,7 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 public class TifirestoreModule extends KrollModule {
 
 	// Standard Debugging variables
-	private static final String LCAT = "TiFirestore";
+	public static final String LCAT = "TiFirestore";
 	private static final boolean DBG = TiConfig.LOGD;
 
 	// You can define constants with @Kroll.constant, for example:
