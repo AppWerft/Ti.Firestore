@@ -56,12 +56,29 @@ Now add another document to the users collection. Notice that this document incl
 
 ```
 users.add({
-    "first" : "Alan",
-    "middle" :  "Mathison",
-    "last" : "Turing",
-    "born" :  1912
-    },	onComplete);
+    data : {
+    	"first" : "Alan",
+    	"middle" :  "Mathison",
+    	"last" : "Turing",
+    	"born" :  1912
+    }}, onComplete);
 ```
+### Set data
+
+When you use set() to create a document, you must specify an ID for the document to create. For example:
+
+```
+users.set({
+    id : "alanmathison",
+    data : {
+	    "first" : "Alan",
+  		 "middle" :  "Mathison",
+  	    "last" : "Turing",
+       "born" :  1912
+  	}},	onComplete);
+```
+With `add data` a new document will created, With `set data` youcan update an existing document or you can add and you can choose an own ID.
+
 
 ### Read data
 
