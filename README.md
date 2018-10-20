@@ -100,7 +100,7 @@ user.get({
 ### Listen data (realtime)
 
 ```
-user.listen({
+users.listen({
 	where : {
 		born : "≥1820",
 		first : "=Alan"
@@ -110,7 +110,12 @@ user.listen({
 },onComplete);
 ```
 
+### Delete data
 
+
+```
+users.delete(id,onComplete);
+```
 
 ### Secure your data
 
@@ -118,7 +123,7 @@ If you're using the Web, Android, or iOS SDK, use [Firebase Authentication](http
 
 Here are some basic rule sets you can use to get started. You can modify your security rules in the Rules tab of the console.
 
-### Callbacks
+### onComplete
 
 All callbacks contains:
 
