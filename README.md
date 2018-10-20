@@ -79,6 +79,10 @@ users.set({
 ```
 With `add data` a new document will created, With `set data` youcan update an existing document or you can add and you can choose an own ID.
 
+### Update data
+
+To update some fields of a document without overwriting the entire document, use the update() method:
+
 
 ### Read data
 

@@ -10,8 +10,28 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.google.firebase.firestore.*;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 
 public class CollectionReferenceProxy extends KrollProxy {
+
+	private final class onFailure implements OnFailureListener {
+		@Override
+		public void onFailure(@NonNull Exception e) {
+		}
+	}
+
+	private final class onSuccess implements
+			OnSuccessListener<DocumentReference> {
+		@Override
+		public void onSuccess(DocumentReference documentReference) {
+
+		}
+	}
+
 	private String collectionName;
 	private KrollFunction Callback;
 	private final String LCAT = TifirestoreModule.LCAT;
@@ -34,8 +54,57 @@ public class CollectionReferenceProxy extends KrollProxy {
 	}
 
 	@Kroll.method
-	public void add(KrollDict doc) {
-		db.collection(collectionName).add(new HashMap<>(doc));
+	public void add(Object[] args) {
+		if (args.length < 1) {
+			Log.e(LCAT, "add() needs minimal one parameter");
+			return;
+		}
+		if (!(args[0] instanceof KrollDict)) {
+			Log.e(LCAT, "add() needs minimal one parameter as object");
+			return;
+		}
+		KrollDict opts = (KrollDict) args[0];
+		if (!opts.containsKeyAndNotNull("data")) {
+			Log.e(LCAT, "add() first parameter must contain a property 'data'");
+			return;
+		}
+		Object o = opts.get("data");
+		if (!(o instanceof KrollDict)) {
+			Log.e(LCAT, "data must be an object");
+			return;
+		}
+		KrollDict dict = (KrollDict) o;
+		db.collection(collectionName).add(new HashMap<>(dict))
+				.addOnSuccessListener(new onSuccess())
+				.addOnFailureListener(new onFailure());
+
+	}
+	
+	@Kroll.method
+	public void set(Object[] args) {
+		if (args.length < 1) {
+			Log.e(LCAT, "add() needs minimal one parameter");
+			return;
+		}
+		if (!(args[0] instanceof KrollDict)) {
+			Log.e(LCAT, "add() needs minimal one parameter as object");
+			return;
+		}
+		KrollDict opts = (KrollDict) args[0];
+		if (!opts.containsKeyAndNotNull("data")) {
+			Log.e(LCAT, "add() first parameter must contain a property 'data'");
+			return;
+		}
+		Object o = opts.get("data");
+		if (!(o instanceof KrollDict)) {
+			Log.e(LCAT, "data must be an object");
+			return;
+		}
+		KrollDict dict = (KrollDict) o;
+		db.collection(collectionName).add(new HashMap<>(dict))
+				.addOnSuccessListener(new onSuccess())
+				.addOnFailureListener(new onFailure());
+
 	}
 
 	/*
@@ -47,16 +116,32 @@ public class CollectionReferenceProxy extends KrollProxy {
 		CollectionReference ref = db.collection(collectionName);
 		if (args[0] != null && args[0] instanceof KrollDict) {
 			KrollDict opts = (KrollDict) args[0];
-			for (String key : opts.keySet()) {
-				parseCondition(key, opts.getString(key), ref);
+			if (opts.containsKeyAndNotNull("where")) {
+				Object o = opts.get("where");
+				if (o instanceof KrollDict) {
+					KrollDict where = (KrollDict) o;
+					for (String key : opts.keySet()) {
+						final String value = opts.getString(key);
+						ref = parseAndBuildQuery(key, value, ref);
+					}
+				} else
+					return;
 			}
+			if (opts.containsKeyAndNotNull("orderBy")) {
+				ref = (CollectionReference) ref.orderBy(opts
+						.getString("orderBy"));
+			}
+			if (opts.containsKeyAndNotNull("limit")) {
+				ref = (CollectionReference) ref.limit(opts.getInt("limit"));
+			}
+
 		}
 	}
 
-	private static Query parseCondition(String field, String foo,
-			CollectionReference ref) {
+	private static CollectionReference parseAndBuildQuery(String field,
+			String valueString, CollectionReference ref) {
 		Query query = null;
-		String[] parts = foo.split(" ");
+		String[] parts = valueString.split(" ");
 		if (parts.length < 2)
 			return null;
 		String value = parts[1];
@@ -80,7 +165,7 @@ public class CollectionReferenceProxy extends KrollProxy {
 			query = ref.whereEqualTo(field, value);
 			break;
 		}
-		return query;
+		return (CollectionReference) query;
 	}
 
 }
