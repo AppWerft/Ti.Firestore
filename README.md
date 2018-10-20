@@ -46,6 +46,11 @@ users.add({
 	"born" :  1962
  },	onComplete);
 ```
+Alternatively you can ommit the second paramter and can usea second paramter as callback listener.
+
+```
+const users = Firestore.createCollectionReference('users',onCompleted);
+```
 
 Now add another document to the users collection. Notice that this document includes a key-value pair (middle name) that does not appear in the first document. Documents in a collection can contain different sets of information.
 

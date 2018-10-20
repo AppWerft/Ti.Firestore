@@ -38,6 +38,7 @@ public class TifirestoreModule extends KrollModule {
 	// Methods
 	@Kroll.method
 	public void connect() {
+		if (db ==null)
 		db = FirebaseFirestore.getInstance();
 		
 	}
