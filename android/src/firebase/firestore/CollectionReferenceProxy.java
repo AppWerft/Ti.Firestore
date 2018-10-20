@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+
 import com.google.firebase.firestore.*;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -47,7 +50,7 @@ public class CollectionReferenceProxy extends KrollProxy {
 						result = new KrollDict(
 								documentSnapshot.toObject(JSONObject.class));
 					} catch (JSONException e) {
-						// TODO Auto-generated catch block
+
 						e.printStackTrace();
 					}
 					if (Callback != null)
@@ -199,26 +202,46 @@ public class CollectionReferenceProxy extends KrollProxy {
 		prepareAndStartQuery(args, LISTEN);
 	}
 
-	private void prepareAndStartQuery(Object[] args, int querytype) {
+	private void prepareAndStartQuery(Object[] args, int QUERYTYPE) {
 		if (args.length < 1) {
 			Log.e(LCAT, "get() needs minimal one parameter");
-			return ;
+			return;
 		}
-		CollectionReference collectionRef = db.collection(collectionName);
+		final CollectionReference collectionRef = db.collection(collectionName);
 		if ((args[0] instanceof String)) {
 			String id = (String) args[0];
-			switch (querytype) {
+			Task<DocumentSnapshot> snap = collectionRef.document(id).get();
+			switch (QUERYTYPE) {
 			case GET:
-				collectionRef.document(id).get()
-				.addOnCompleteListener(new onComplete());
+				snap.addOnCompleteListener(new onComplete());
 				break;
-			case LISTEN :
+			case LISTEN:
+				snap.addSnapshotListener(
+								new EventListener<DocumentSnapshot>() {
+									@Override
+									public void onEvent(
+											@Nullable DocumentSnapshot snapshot,
+											@Nullable FirebaseFirestoreException e) {
+										if (e != null) {
+											Log.w(LCAT, "Listen failed.", e);
+											return;
+										}
+
+										if (snapshot != null
+												&& snapshot.exists()) {
+											Log.d(LCAT, "Current data: "
+													+ snapshot.getData());
+										} else {
+											Log.d(LCAT, "Current data: null");
+										}
+									}
+								});
 				break;
 			}
-			return ;
+			return;
 		} else if (!(args[0] instanceof KrollDict)) {
 			Log.e(LCAT, "get() needs minimal one parameter as object");
-			return ;
+			return;
 		}
 
 		KrollDict opts = (KrollDict) args[0];
@@ -231,8 +254,8 @@ public class CollectionReferenceProxy extends KrollProxy {
 					collectionRef = parseAndBuildQuery(key, value,
 							collectionRef);
 				}
-			} 
-				
+			}
+
 		}
 		if (opts.containsKeyAndNotNull("orderBy")) {
 			collectionRef = (CollectionReference) collectionRef.orderBy(opts
@@ -242,13 +265,13 @@ public class CollectionReferenceProxy extends KrollProxy {
 			collectionRef = (CollectionReference) collectionRef.limit(opts
 					.getInt("limit"));
 		}
-		switch(querytype) {
+		switch (QUERYTYPE) {
 		case GET:
 			collectionRef.get().addOnCompleteListener(new onQueryComplete());
 			break;
 		case LISTEN:
 			break;
-		}	
+		}
 	}
 
 	/* helper for transform JS object to query */
