@@ -24,6 +24,7 @@ require('firebase.core').configure;
 
 const Firestore = require('firebase.firestore');
 Firestore.connect();
+Firestore.setLoggingEnabled(true);
 ```
 
 ### Add data

@@ -10,56 +10,39 @@ package firebase.firestore;
 
 import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.annotations.Kroll;
-
 import org.appcelerator.titanium.TiApplication;
 import org.appcelerator.kroll.common.Log;
 import org.appcelerator.kroll.common.TiConfig;
 
+import com.google.firebase.firestore.FirebaseFirestore;
 
-@Kroll.module(name="Tifirebase", id="firebase.firestore")
-public class TifirestoreModule extends KrollModule
-{
+@Kroll.module(name = "Tifirebase", id = "firebase.firestore")
+public class TifirestoreModule extends KrollModule {
 
 	// Standard Debugging variables
-	private static final String LCAT = "TifirebaseModule";
+	private static final String LCAT = "TiFirestore";
 	private static final boolean DBG = TiConfig.LOGD;
 
 	// You can define constants with @Kroll.constant, for example:
 	// @Kroll.constant public static final String EXTERNAL_NAME = value;
-
-	public TifirestoreModule()
-	{
+	public FirebaseFirestore db ;
+	public TifirestoreModule() {
 		super();
 	}
 
 	@Kroll.onAppCreate
-	public static void onAppCreate(TiApplication app)
-	{
+	public static void onAppCreate(TiApplication app) {
 		Log.d(LCAT, "inside onAppCreate");
-		// put module init code that needs to run when the application is created
 	}
 
 	// Methods
 	@Kroll.method
-	public String example()
-	{
-		Log.d(LCAT, "example called");
-		return "hello world";
+	public void connect() {
+		db = FirebaseFirestore.getInstance();
+		
 	}
-
-	// Properties
-	@Kroll.getProperty
-	public String getExampleProp()
-	{
-		Log.d(LCAT, "get example property");
-		return "hello world";
+	@Kroll.method
+	public void setLoggingEnabled(boolean enabled) {
+		FirebaseFirestore.setLoggingEnabled(enabled);
 	}
-
-
-	@Kroll.setProperty
-	public void setExampleProp(String value) {
-		Log.d(LCAT, "set example property: " + value);
-	}
-
 }
-
