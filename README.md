@@ -33,7 +33,7 @@ Cloud Firestore stores data in Documents, which are stored in Collections. Cloud
 Create a new collection and a document using the following example code.
 
 ```
-const user = Firestore.createCollection('users');
+const users = Firestore.createCollection('users');
 
 // Create a new user with a first, middle, and last name
 users.add({
@@ -61,7 +61,7 @@ users.add({
 ### Read data
 
 ```
-Firestore.get('users',onComplete);
+users.get(onComplete);
 function onComplete(e) {
 	console.log(e);
 }
