@@ -25,6 +25,13 @@ import com.google.android.gms.tasks.OnCompleteListener;
 
 public class CollectionReferenceProxy extends KrollProxy {
 
+	private String collectionName;
+	private KrollFunction Callback;
+	private static final int GET = 0;
+	private static final int LISTEN = 1;
+	private static final String LCAT = TifirestoreModule.LCAT;
+	private FirebaseFirestore db;
+
 	private final class onComplete implements
 			OnCompleteListener<DocumentSnapshot> {
 		@Override
@@ -35,9 +42,10 @@ public class CollectionReferenceProxy extends KrollProxy {
 					Log.d(LCAT,
 							"DocumentSnapshot data: "
 									+ documentSnapshot.getData());
-					KrollDict result =new KrollDict();
+					KrollDict result = new KrollDict();
 					try {
-						result = new KrollDict(documentSnapshot.toObject(JSONObject.class));
+						result = new KrollDict(
+								documentSnapshot.toObject(JSONObject.class));
 					} catch (JSONException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -108,11 +116,6 @@ public class CollectionReferenceProxy extends KrollProxy {
 				Callback.call(getKrollObject(), e);
 		}
 	}
-
-	private String collectionName;
-	private KrollFunction Callback;
-	private final String LCAT = TifirestoreModule.LCAT;
-	private FirebaseFirestore db;
 
 	public CollectionReferenceProxy() {
 		db = FirebaseFirestore.getInstance();
@@ -188,20 +191,34 @@ public class CollectionReferenceProxy extends KrollProxy {
 
 	@Kroll.method
 	public void get(Object[] args) {
+		prepareAndStartQuery(args, GET);
+	}
+
+	@Kroll.method
+	public void listen(Object[] args) {
+		prepareAndStartQuery(args, LISTEN);
+	}
+
+	private void prepareAndStartQuery(Object[] args, int querytype) {
 		if (args.length < 1) {
 			Log.e(LCAT, "get() needs minimal one parameter");
-			return;
+			return ;
 		}
 		CollectionReference collectionRef = db.collection(collectionName);
 		if ((args[0] instanceof String)) {
 			String id = (String) args[0];
-			collectionRef.document(id).get()
-					.addOnCompleteListener(new onComplete());
-			;
-			return;
+			switch (querytype) {
+			case GET:
+				collectionRef.document(id).get()
+				.addOnCompleteListener(new onComplete());
+				break;
+			case LISTEN :
+				break;
+			}
+			return ;
 		} else if (!(args[0] instanceof KrollDict)) {
 			Log.e(LCAT, "get() needs minimal one parameter as object");
-			return;
+			return ;
 		}
 
 		KrollDict opts = (KrollDict) args[0];
@@ -214,8 +231,8 @@ public class CollectionReferenceProxy extends KrollProxy {
 					collectionRef = parseAndBuildQuery(key, value,
 							collectionRef);
 				}
-			} else
-				return;
+			} 
+				
 		}
 		if (opts.containsKeyAndNotNull("orderBy")) {
 			collectionRef = (CollectionReference) collectionRef.orderBy(opts
@@ -225,8 +242,13 @@ public class CollectionReferenceProxy extends KrollProxy {
 			collectionRef = (CollectionReference) collectionRef.limit(opts
 					.getInt("limit"));
 		}
-		collectionRef.get().addOnCompleteListener(new onQueryComplete());
-
+		switch(querytype) {
+		case GET:
+			collectionRef.get().addOnCompleteListener(new onQueryComplete());
+			break;
+		case LISTEN:
+			break;
+		}	
 	}
 
 	/* helper for transform JS object to query */
