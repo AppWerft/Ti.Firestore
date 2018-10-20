@@ -33,7 +33,7 @@ Cloud Firestore stores data in Documents, which are stored in Collections. Cloud
 Create a new collection and a document using the following example code.
 
 ```
-const users = Firestore.createCollection('users');
+const users = Firestore.createCollectionReference('users');
 
 function onComplete(e) {
 	console.log(e);
@@ -68,3 +68,5 @@ users.get(onComplete);
 If you're using the Web, Android, or iOS SDK, use [Firebase Authentication](https://firebase.google.com/docs/auth/) and [Cloud Firestore Security Rules](https://firebase.google.com/docs/firestore/security/get-started) to secure your data in Cloud Firestore.
 
 Here are some basic rule sets you can use to get started. You can modify your security rules in the Rules tab of the console.
+
+### Next steps
