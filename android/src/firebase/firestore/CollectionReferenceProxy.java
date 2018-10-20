@@ -21,6 +21,11 @@ public class CollectionReferenceProxy extends KrollProxy {
 	private final class onSetSuccess implements OnSuccessListener<Void> {
 		@Override
 		public void onSuccess(Void aVoid) {
+			KrollDict e = new KrollDict();
+			e.put("success", true);
+			e.put("action", "set");
+			if (Callback != null)
+				Callback.call(getKrollObject(), e);
 		}
 	}
 
@@ -30,16 +35,22 @@ public class CollectionReferenceProxy extends KrollProxy {
 		public void onSuccess(DocumentReference documentReference) {
 			KrollDict e = new KrollDict();
 			e.put("success", true);
-			e.put("type", "add");
+			e.put("action", "add");
 			e.put("doc", new DocumentReferenceProxy(documentReference));
-			if (Callback!=null) Callback.call(getKrollObject(),e);
-			
+			if (Callback != null)
+				Callback.call(getKrollObject(), e);
+
 		}
 	}
 
 	private final class onFailure implements OnFailureListener {
 		@Override
-		public void onFailure(@NonNull Exception e) {
+		public void onFailure(@NonNull Exception ex) {
+			KrollDict e = new KrollDict();
+			e.put("success", false);
+			e.put("message", ex.getMessage());
+			if (Callback != null)
+				Callback.call(getKrollObject(), e);
 		}
 	}
 
@@ -88,14 +99,11 @@ public class CollectionReferenceProxy extends KrollProxy {
 		db.collection(collectionName).add(new HashMap<>(dict))
 				.addOnSuccessListener(new onAddSuccess())
 				.addOnFailureListener(new onFailure());
-		if (args.length==2)registerCallback(args[1]);
-		
+		if (args.length == 2)
+			registerCallback(args[1]);
 
 	}
-	private void registerCallback(Object o) {
-		
-		
-	}
+
 	@Kroll.method
 	public void set(Object[] args) {
 		if (args.length < 1) {
@@ -123,37 +131,40 @@ public class CollectionReferenceProxy extends KrollProxy {
 				.addOnFailureListener(new onFailure());
 	}
 
-	/*
-	 * first argument ist KrollDicz with condtions or null second optional arg
-	 * is callback
-	 */
 	@Kroll.method
-	public void listen(Object[] args) {
-		CollectionReference ref = db.collection(collectionName);
-		if (args[0] != null && args[0] instanceof KrollDict) {
-			KrollDict opts = (KrollDict) args[0];
-			if (opts.containsKeyAndNotNull("where")) {
-				Object o = opts.get("where");
-				if (o instanceof KrollDict) {
-					KrollDict where = (KrollDict) o;
-					for (String key : opts.keySet()) {
-						final String value = opts.getString(key);
-						ref = parseAndBuildQuery(key, value, ref);
-					}
-				} else
-					return;
-			}
-			if (opts.containsKeyAndNotNull("orderBy")) {
-				ref = (CollectionReference) ref.orderBy(opts
-						.getString("orderBy"));
-			}
-			if (opts.containsKeyAndNotNull("limit")) {
-				ref = (CollectionReference) ref.limit(opts.getInt("limit"));
-			}
-
+	public void get(Object[] args) {
+		if (args.length < 1) {
+			Log.e(LCAT, "get() needs minimal one parameter");
+			return;
 		}
+		if (!(args[0] instanceof KrollDict)) {
+			Log.e(LCAT, "get() needs minimal one parameter as object");
+			return;
+		}
+		CollectionReference ref = db.collection(collectionName);
+		KrollDict opts = (KrollDict) args[0];
+		if (opts.containsKeyAndNotNull("where")) {
+			Object o = opts.get("where");
+			if (o instanceof KrollDict) {
+				KrollDict where = (KrollDict) o;
+				for (String key : opts.keySet()) {
+					final String value = opts.getString(key);
+					ref = parseAndBuildQuery(key, value, ref);
+				}
+			} else
+				return;
+		}
+		if (opts.containsKeyAndNotNull("orderBy")) {
+			ref = (CollectionReference) ref.orderBy(opts.getString("orderBy"));
+		}
+		if (opts.containsKeyAndNotNull("limit")) {
+			ref = (CollectionReference) ref.limit(opts.getInt("limit"));
+		}
+
 	}
 
+	
+	/* helper for transform JS object to query */
 	private static CollectionReference parseAndBuildQuery(String field,
 			String valueString, CollectionReference ref) {
 		Query query = null;
@@ -184,4 +195,11 @@ public class CollectionReferenceProxy extends KrollProxy {
 		return (CollectionReference) query;
 	}
 
+	private void registerCallback(Object o) {
+		if (o == null)
+			return;
+		if (!(o instanceof KrollFunction))
+			return;
+		Callback = (KrollFunction) o;
+	}
 }
