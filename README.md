@@ -61,6 +61,10 @@ users.add({
 
 ```
 users.get(onComplete);
-
-
 ```
+
+### Secure your data
+
+If you're using the Web, Android, or iOS SDK, use [Firebase Authentication](https://firebase.google.com/docs/auth/) and [Cloud Firestore Security Rules](https://firebase.google.com/docs/firestore/security/get-started) to secure your data in Cloud Firestore.
+
+Here are some basic rule sets you can use to get started. You can modify your security rules in the Rules tab of the console.
