@@ -18,17 +18,28 @@ import com.google.android.gms.tasks.Tasks;
 
 public class CollectionReferenceProxy extends KrollProxy {
 
-	private final class onFailure implements OnFailureListener {
+	private final class onSetSuccess implements OnSuccessListener<Void> {
 		@Override
-		public void onFailure(@NonNull Exception e) {
+		public void onSuccess(Void aVoid) {
 		}
 	}
 
-	private final class onSuccess implements
+	private final class onAddSuccess implements
 			OnSuccessListener<DocumentReference> {
 		@Override
 		public void onSuccess(DocumentReference documentReference) {
+			KrollDict e = new KrollDict();
+			e.put("success", true);
+			e.put("type", "add");
+			e.put("doc", new DocumentReferenceProxy(documentReference));
+			if (Callback!=null) Callback.call(getKrollObject(),e);
+			
+		}
+	}
 
+	private final class onFailure implements OnFailureListener {
+		@Override
+		public void onFailure(@NonNull Exception e) {
 		}
 	}
 
@@ -75,11 +86,16 @@ public class CollectionReferenceProxy extends KrollProxy {
 		}
 		KrollDict dict = (KrollDict) o;
 		db.collection(collectionName).add(new HashMap<>(dict))
-				.addOnSuccessListener(new onSuccess())
+				.addOnSuccessListener(new onAddSuccess())
 				.addOnFailureListener(new onFailure());
+		if (args.length==2)registerCallback(args[1]);
+		
 
 	}
-	
+	private void registerCallback(Object o) {
+		
+		
+	}
 	@Kroll.method
 	public void set(Object[] args) {
 		if (args.length < 1) {
@@ -101,10 +117,10 @@ public class CollectionReferenceProxy extends KrollProxy {
 			return;
 		}
 		KrollDict dict = (KrollDict) o;
-		db.collection(collectionName).add(new HashMap<>(dict))
-				.addOnSuccessListener(new onSuccess())
+		final String id = opts.getString("id");
+		db.collection(collectionName).document(id).set(new HashMap<>(dict))
+				.addOnSuccessListener(new onSetSuccess())
 				.addOnFailureListener(new onFailure());
-
 	}
 
 	/*

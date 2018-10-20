@@ -65,7 +65,7 @@ users.add({
 ```
 ### Set data
 
-When you use set() to create a document, you must specify an ID for the document to create. For example:
+To create or overwrite a single document, use the set() method:
 
 ```
 users.set({
@@ -118,4 +118,17 @@ If you're using the Web, Android, or iOS SDK, use [Firebase Authentication](http
 
 Here are some basic rule sets you can use to get started. You can modify your security rules in the Rules tab of the console.
 
-### Next steps
+### Callbacks
+
+All callbacks contains:
+
+- success
+- action (add, set, get, update, listen)
+- documentref
+
+### DocumentReference
+
+#### Methods
+
+- getId()
+- getParent()
