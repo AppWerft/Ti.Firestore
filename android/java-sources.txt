@@ -1,5 +1,4 @@
 "/Users/fuerst/Documents/MLearning/Ti.Firestore/android/src/firebase/firestore/CollectionReferenceProxy.java"
-"/Users/fuerst/Documents/MLearning/Ti.Firestore/android/src/firebase/firestore/DocumentReferenceProxy.java"
 "/Users/fuerst/Documents/MLearning/Ti.Firestore/android/src/firebase/firestore/DocumentSnapshotProxy.java"
 "/Users/fuerst/Documents/MLearning/Ti.Firestore/android/src/firebase/firestore/ListenerRegistrationProxy.java"
 "/Users/fuerst/Documents/MLearning/Ti.Firestore/android/src/firebase/firestore/TifirestoreModule.java"
