@@ -6,6 +6,7 @@ import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.KrollProxy;
 import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.kroll.common.Log;
+import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.List;
@@ -35,10 +36,15 @@ public class DocumentSnapshotProxy extends KrollProxy {
     @Kroll.method
     public KrollDict getSnapshot() {
     	KrollDict doc = new KrollDict();
+    	//snapshot.toObject(JSONObject.class);
     	for (Map.Entry<String, Object> entry : snapshot.getData()
 				.entrySet()) {
     		doc.put(entry.getKey(), entry.getValue());
 		}
+    	doc.put("id", snapshot.getId());
+    	doc.put("hasPendingWrites", snapshot.getMetadata().hasPendingWrites());
+     	doc.put("isFromCache", snapshot.getMetadata().isFromCache());
+        
     	return doc;
     }
 	
