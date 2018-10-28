@@ -19,6 +19,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.google.firebase.firestore.*;
+import com.google.firebase.firestore.DocumentChange.Type;
 import com.google.firebase.*;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -42,7 +43,7 @@ public class CollectionReferenceProxy extends KrollProxy {
 	private final class onSnapshotQueryListener implements
 			EventListener<QuerySnapshot> {
 		@Override
-		public void onEvent(@Nullable QuerySnapshot value,
+		public void onEvent(@Nullable QuerySnapshot snapshots,
 				@Nullable FirebaseFirestoreException ex) {
 			KrollDict event = new KrollDict();
 			if (ex != null) {
@@ -51,13 +52,22 @@ public class CollectionReferenceProxy extends KrollProxy {
 				dispatchOnError(event);
 				return;
 			}
+			
 			List<DocumentSnapshotProxy> results = new ArrayList<DocumentSnapshotProxy>();
-			for (QueryDocumentSnapshot snapshot : value) {
+		
+			for (DocumentChange dc : snapshots.getDocumentChanges()) {
+                if (dc.getType() == Type.ADDED) {
+                }
+            }
+
+			
+			
+			for (QueryDocumentSnapshot snapshot : snapshots) {
 				results.add(new DocumentSnapshotProxy(snapshot));
 			}
-			event.put("hasPendingWrites", value.getMetadata()
+			event.put("hasPendingWrites", snapshots.getMetadata()
 					.hasPendingWrites());
-			event.put("isFromCache", value.getMetadata().isFromCache());
+			event.put("isFromCache", snapshots.getMetadata().isFromCache());
 			event.put("data", results.toArray(new KrollDict[results.size()]));
 			dispatchOnCompleted(event);
 		}
