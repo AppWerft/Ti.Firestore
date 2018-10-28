@@ -1,5 +1,5 @@
-Ti.Firestore
-===========================================
+# Ti.Firestore
+
 ![](https://raw.githubusercontent.com/hansemannn/titanium-firebase/master/titanium-firebase-logo%402x.png)
 
 
