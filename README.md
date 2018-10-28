@@ -136,15 +136,24 @@ user.get({
 ### Listen data (realtime) from collection
 
 ```
-users.listen({
+var listener = users.listen({
 	where : {
 		born : "≥1820",
 		first : "=Alan"
 	},
 	limit : 1,
 	orderBy : born
+}, function(e) {
+	console.log(e);
 });
+
 ```
+### Detach a listener
+
+When you are no longer interested in listening to your data, you must detach your listener so that your event callbacks stop getting called. This allows the client to stop using bandwidth to receive updates. You can use the unsubscribe function on onSnapshot() to stop listening to updates.
+
+```javascript
+listener.
 
 ### Delete data
 
@@ -152,6 +161,10 @@ To delete a document, use the delete() method:
 ```
 users.delete(id);
 ```
+
+### Method callbacks
+
+Every method has an optional last parameter. This is a callback for receiving method bind return data.
 
 ### Secure your data
 

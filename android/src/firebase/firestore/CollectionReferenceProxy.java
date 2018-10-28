@@ -55,8 +55,9 @@ public class CollectionReferenceProxy extends KrollProxy {
 			for (QueryDocumentSnapshot snapshot : value) {
 				results.add(new DocumentSnapshotProxy(snapshot));
 			}
-			event.put("hasPendingWrites",value.getMetadata().hasPendingWrites());
-			event.put("isFromCache",value.getMetadata().isFromCache());
+			event.put("hasPendingWrites", value.getMetadata()
+					.hasPendingWrites());
+			event.put("isFromCache", value.getMetadata().isFromCache());
 			event.put("data", results.toArray(new KrollDict[results.size()]));
 			dispatchOnCompleted(event);
 		}
@@ -76,17 +77,7 @@ public class CollectionReferenceProxy extends KrollProxy {
 				return;
 			}
 			if (snapshot != null && snapshot.exists()) {
-				Log.d(LCAT, "Current data: " + snapshot.getData());
-				event.put("id", snapshot.getId());
-				event.put("hasPendingWrites", snapshot.getMetadata()
-						.hasPendingWrites());
-				event.put("isFromCache", snapshot.getMetadata().isFromCache());
-				KrollDict data = new KrollDict();
-				for (Map.Entry<String, Object> entry : snapshot.getData()
-						.entrySet()) {
-					data.put(entry.getKey(), entry.getValue());
-				}
-				event.put("data", data);
+				event.put("data", new DocumentSnapshotProxy(snapshot));
 				dispatchOnCompleted(event);
 			} else {
 				Log.d(LCAT, "Current data: null");
@@ -101,19 +92,10 @@ public class CollectionReferenceProxy extends KrollProxy {
 		public void onComplete(@NonNull Task<DocumentSnapshot> task) {
 			KrollDict event = new KrollDict();
 			if (task.isSuccessful()) {
-				DocumentSnapshot documentSnapshot = task.getResult();
-				if (documentSnapshot.exists()) {
-					Log.d(LCAT,
-							"DocumentSnapshot data: "
-									+ documentSnapshot.getData());
-					KrollDict result = new KrollDict();
-					try {
-						result = new KrollDict(
-								documentSnapshot.toObject(JSONObject.class));
-					} catch (JSONException e) {
-						e.printStackTrace();
-					}
-					dispatchOnCompleted(result);
+				DocumentSnapshot snapshot = task.getResult();
+				if (snapshot.exists()) {
+					event.put("data", new DocumentSnapshotProxy(snapshot));
+					dispatchOnCompleted(event);
 				} else {
 					Log.d(LCAT, "No such document");
 				}
@@ -136,13 +118,9 @@ public class CollectionReferenceProxy extends KrollProxy {
 						.hasPendingWrites());
 				result.put("isFromCache", task.getResult().getMetadata()
 						.isFromCache());
-
-				ArrayList<JSONObject> list = new ArrayList<JSONObject>();
-				for (QueryDocumentSnapshot queryDocumentSnapshot : task
-						.getResult()) {
-					list.add(queryDocumentSnapshot.toObject(JSONObject.class));
-					Log.d(LCAT, "DocumentSnapshot data: "
-							+ queryDocumentSnapshot.getData());
+				ArrayList<DocumentSnapshotProxy> list = new ArrayList<DocumentSnapshotProxy>();
+				for (QueryDocumentSnapshot snapshot : task.getResult()) {
+					list.add(new DocumentSnapshotProxy(snapshot));
 				}
 				result.put("data", list.toArray((new KrollDict[list.size()])));
 				dispatchOnCompleted(result);
@@ -166,7 +144,9 @@ public class CollectionReferenceProxy extends KrollProxy {
 		@Override
 		public void onSuccess(DocumentReference documentReference) {
 			KrollDict result = new KrollDict();
-			result.put("doc", new DocumentReferenceProxy(documentReference));
+			result.put("id", documentReference.getId());
+			result.put("path", documentReference.getPath());
+			result.put("path", documentReference.getPath());
 			dispatchOnCompleted(result);
 		}
 	}
@@ -261,14 +241,15 @@ public class CollectionReferenceProxy extends KrollProxy {
 	}
 
 	@Kroll.method
-	public void listen(Object[] args) {
-		prepareAndStartQuery(args, LISTEN);
+	public ListenerRegistrationProxy listen(Object[] args) {
+		return prepareAndStartQuery(args, LISTEN);
 	}
 
-	private void prepareAndStartQuery(Object[] args, int QUERYTYPE) {
+	private ListenerRegistrationProxy prepareAndStartQuery(Object[] args,
+			int QUERYTYPE) {
 		if (args.length < 1) {
 			Log.e(LCAT, "get() needs minimal one parameter");
-			return;
+			return null;
 		}
 		CollectionReference collRef = db.collection(collectionName);
 
@@ -279,15 +260,16 @@ public class CollectionReferenceProxy extends KrollProxy {
 			switch (QUERYTYPE) {
 			case GET:
 				docref.get().addOnCompleteListener(new onComplete());
-				break;
+				return null;
 			case LISTEN:
-				docref.addSnapshotListener(new onSnapshotListener());
-				break;
+				ListenerRegistration registration = docref
+						.addSnapshotListener(new onSnapshotListener());
+				return new ListenerRegistrationProxy(registration);
 			}
-			return;
+			return null;
 		} else if (!(args[0] instanceof KrollDict)) {
 			Log.e(LCAT, "get() needs minimal one parameter as object");
-			return;
+			return null;
 		}
 
 		KrollDict opts = (KrollDict) args[0];
@@ -312,10 +294,11 @@ public class CollectionReferenceProxy extends KrollProxy {
 		switch (QUERYTYPE) {
 		case GET:
 			collRef.get().addOnCompleteListener(new onQueryComplete());
-			break;
+			return null;
 		case LISTEN:
-			collRef.addSnapshotListener(new onSnapshotQueryListener());
-			break;
+			ListenerRegistration registration = collRef
+					.addSnapshotListener(new onSnapshotQueryListener());
+			return new ListenerRegistrationProxy(registration);
 		}
 	}
 
