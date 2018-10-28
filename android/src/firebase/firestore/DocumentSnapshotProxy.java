@@ -18,24 +18,27 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 
-public class DocumentReferenceProxy extends KrollProxy {
+public class DocumentSnapshotProxy extends KrollProxy {
 
 	
 	private final String LCAT = TifirestoreModule.LCAT;
-	public DocumentReference document;
+	public DocumentSnapshot snapshot;
 
-	public DocumentReferenceProxy() {
+	public DocumentSnapshotProxy() {
 			
 	}
-	public DocumentReferenceProxy(DocumentReference doc) {
-		this.document = doc;
+	public DocumentSnapshotProxy(DocumentSnapshot snapshot) {
+		this.snapshot = snapshot;
 	}
 	
 	
     @Kroll.method
-    public KrollDict getDocument() {
+    public KrollDict getSnapshot() {
     	KrollDict doc = new KrollDict();
-    	
+    	for (Map.Entry<String, Object> entry : snapshot.getData()
+				.entrySet()) {
+    		doc.put(entry.getKey(), entry.getValue());
+		}
     	return doc;
     }
 	

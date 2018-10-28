@@ -1,5 +1,6 @@
 "/Users/fuerst/Documents/MLearning/Ti.Firestore/android/src/firebase/firestore/CollectionReferenceProxy.java"
 "/Users/fuerst/Documents/MLearning/Ti.Firestore/android/src/firebase/firestore/DocumentReferenceProxy.java"
+"/Users/fuerst/Documents/MLearning/Ti.Firestore/android/src/firebase/firestore/DocumentSnapshotProxy.java"
 "/Users/fuerst/Documents/MLearning/Ti.Firestore/android/src/firebase/firestore/TifirestoreModule.java"
 "/Users/fuerst/Documents/MLearning/Ti.Firestore/android/build/generated/java/firebase/firestore/CollectionReferenceBootstrap.java"
 "/Users/fuerst/Documents/MLearning/Ti.Firestore/android/build/generated/r/android/support/compat/R.java"
