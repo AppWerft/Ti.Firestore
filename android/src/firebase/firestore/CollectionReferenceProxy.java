@@ -300,6 +300,7 @@ public class CollectionReferenceProxy extends KrollProxy {
 					.addSnapshotListener(new onSnapshotQueryListener());
 			return new ListenerRegistrationProxy(registration);
 		}
+		return  null;
 	}
 
 	/* helper for transform JS object to query */
