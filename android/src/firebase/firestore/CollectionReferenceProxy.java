@@ -46,26 +46,19 @@ public class CollectionReferenceProxy extends KrollProxy {
 				@Nullable FirebaseFirestoreException ex) {
 			KrollDict event = new KrollDict();
 			if (ex != null) {
-				Log.w(LCAT, "Listen failed.", ex);
 				event.put("code", ex.getCode());
 				event.put("message", ex.getMessage());
 				dispatchOnError(event);
 				return;
 			}
-
-			List<KrollDict> results = new ArrayList<KrollDict>();
-			for (QueryDocumentSnapshot doc : value) {
-				KrollDict result = new KrollDict();
-				try {
-					results.add(new KrollDict(doc.toObject(JSONObject.class)));
-				} catch (JSONException jsonex) {
-					jsonex.printStackTrace();
-				}
+			List<DocumentSnapshotProxy> results = new ArrayList<DocumentSnapshotProxy>();
+			for (QueryDocumentSnapshot snapshot : value) {
+				results.add(new DocumentSnapshotProxy(snapshot));
 			}
+			event.put("hasPendingWrites",value.getMetadata().hasPendingWrites());
+			event.put("isFromCache",value.getMetadata().isFromCache());
 			event.put("data", results.toArray(new KrollDict[results.size()]));
-
 			dispatchOnCompleted(event);
-
 		}
 	}
 
@@ -151,7 +144,7 @@ public class CollectionReferenceProxy extends KrollProxy {
 					Log.d(LCAT, "DocumentSnapshot data: "
 							+ queryDocumentSnapshot.getData());
 				}
-				result.put("data",list.toArray((new KrollDict[list.size()])));
+				result.put("data", list.toArray((new KrollDict[list.size()])));
 				dispatchOnCompleted(result);
 			} else {
 				result.put("message", task.getException().getMessage());
@@ -187,10 +180,9 @@ public class CollectionReferenceProxy extends KrollProxy {
 			dispatchOnError(e);
 		}
 	}
+
 	// end of callbacks
-	
-	
-	
+
 	public CollectionReferenceProxy() {
 		db = FirebaseFirestore.getInstance();
 	}
