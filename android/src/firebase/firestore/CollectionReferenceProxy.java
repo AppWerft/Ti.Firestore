@@ -19,6 +19,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.google.firebase.firestore.*;
+import com.google.firebase.*;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -26,7 +27,9 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.tasks.OnCompleteListener;
 
-public class CollectionReferenceProxy extends KrollProxy {
+
+@Kroll.module(parentModule = TifirestoreModule.class, propertyAccessors = { "onCompleted","onError" })
+public class CollectionReferenceProxy extends KrollProxy{
 
 	private String collectionName;
 	private KrollFunction Callback;
@@ -34,6 +37,49 @@ public class CollectionReferenceProxy extends KrollProxy {
 	private static final int LISTEN = 1;
 	private static final String LCAT = TifirestoreModule.LCAT;
 	private FirebaseFirestore db;
+
+	private final class onSnapshotQueryListener implements
+			EventListener<QuerySnapshot> {
+		@Override
+		public void onEvent(@Nullable QuerySnapshot value,
+		                    @Nullable FirebaseFirestoreException e) {
+		    if (e != null) {
+		        Log.w(LCAT, "Listen failed.", e);
+		        return;
+		    }
+		    KrollDict event = new KrollDict();
+		    List<KrollDict> results = new ArrayList<KrollDict>();
+		    for (QueryDocumentSnapshot doc : value) {
+		    	KrollDict result = new KrollDict();
+				try {
+					results.add(new KrollDict(
+							doc.toObject(JSONObject.class)));
+				} catch (JSONException ex) {
+					ex.printStackTrace();
+				}
+		    }
+		    event.put("data", results.toArray(new KrollDict[results.size()]));
+		    dispatchOnCompleted(event);
+		   
+		}
+	}
+
+	private final class onSnapshotListener implements
+			EventListener<DocumentSnapshot> {
+		@Override
+		public void onEvent(@Nullable DocumentSnapshot snapshot,
+				@Nullable FirebaseFirestoreException e) {
+			if (e != null) {
+				Log.w(LCAT, "Listen failed.", e);
+				return;
+			}
+			if (snapshot != null && snapshot.exists()) {
+				Log.d(LCAT, "Current data: " + snapshot.getData());
+			} else {
+				Log.d(LCAT, "Current data: null");
+			}
+		}
+	}
 
 	private final class onComplete implements
 			OnCompleteListener<DocumentSnapshot> {
@@ -120,6 +166,11 @@ public class CollectionReferenceProxy extends KrollProxy {
 		}
 	}
 
+	
+	
+	
+	
+	
 	public CollectionReferenceProxy() {
 		db = FirebaseFirestore.getInstance();
 	}
@@ -207,31 +258,18 @@ public class CollectionReferenceProxy extends KrollProxy {
 			Log.e(LCAT, "get() needs minimal one parameter");
 			return;
 		}
-		final CollectionReference collectionRef = db.collection(collectionName);
+		CollectionReference collRef = db.collection(collectionName);
+		
+		// getting/listening for  one document:
 		if ((args[0] instanceof String)) {
 			String id = (String) args[0];
-			Task<DocumentSnapshot> snap = collectionRef.document(id).get();
+			DocumentReference docref = collRef.document(id);
 			switch (QUERYTYPE) {
 			case GET:
-				snap.addOnCompleteListener(new onComplete());
+				docref.get().addOnCompleteListener(new onComplete());
 				break;
 			case LISTEN:
-				snap.addSnapshotListener(new EventListener<DocumentSnapshot>() {
-					@Override
-					public void onEvent(@Nullable DocumentSnapshot snapshot,
-							@Nullable FirebaseFirestoreException e) {
-						if (e != null) {
-							Log.w(LCAT, "Listen failed.", e);
-							return;
-						}
-
-						if (snapshot != null && snapshot.exists()) {
-							Log.d(LCAT, "Current data: " + snapshot.getData());
-						} else {
-							Log.d(LCAT, "Current data: null");
-						}
-					}
-				});
+				docref.addSnapshotListener(new onSnapshotListener());
 				break;
 			}
 			return;
@@ -247,25 +285,26 @@ public class CollectionReferenceProxy extends KrollProxy {
 				KrollDict where = (KrollDict) o;
 				for (String key : opts.keySet()) {
 					final String value = opts.getString(key);
-					collectionRef = parseAndBuildQuery(key, value,
-							collectionRef);
+					collRef = parseAndBuildQuery(key, value,
+							collRef);
 				}
 			}
 
 		}
 		if (opts.containsKeyAndNotNull("orderBy")) {
-			collectionRef = (CollectionReference) collectionRef.orderBy(opts
+			collRef = (CollectionReference) collRef.orderBy(opts
 					.getString("orderBy"));
 		}
 		if (opts.containsKeyAndNotNull("limit")) {
-			collectionRef = (CollectionReference) collectionRef.limit(opts
+			collRef = (CollectionReference) collRef.limit(opts
 					.getInt("limit"));
 		}
 		switch (QUERYTYPE) {
 		case GET:
-			collectionRef.get().addOnCompleteListener(new onQueryComplete());
+			collRef.get().addOnCompleteListener(new onQueryComplete());
 			break;
 		case LISTEN:
+			collRef.addSnapshotListener(new onSnapshotQueryListener());
 			break;
 		}
 	}
@@ -307,5 +346,18 @@ public class CollectionReferenceProxy extends KrollProxy {
 		if (!(o instanceof KrollFunction))
 			return;
 		Callback = (KrollFunction) o;
+	}
+	
+	
+	private void dispatchOnCompleted(KrollDict event) {
+		KrollFunction onverificationcompleted = (KrollFunction) getProperty("onCompleted");
+		if (onverificationcompleted != null) {
+			onverificationcompleted.call(getKrollObject(),
+					new Object[] { event });
+		}
+
+		if (this.hasListeners("completed")) {
+			this.fireEvent("completed", event);
+		}
 	}
 }

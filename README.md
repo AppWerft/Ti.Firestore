@@ -27,7 +27,46 @@ Firestore.connect();
 Firestore.setLoggingEnabled(true);
 ```
 
-### Add data
+### Working with collections
+
+Collections in noSQl world are the pendant to tables in SQL.
+You can simple create a schemaless collection with this command.
+
+```javascript
+const users = Firestore.createCollectionReference('users');
+```
+
+In this example a collection `user` will created.
+
+All actions with this collection works asynchronously. Therefore we have no return value, but we can use a callback:
+
+```javascript
+users.onCompleted = function(e) {
+	console.log(e);
+}
+```
+After action like `add` and `set` the method will return the new ID. In case of `get` or `listen` you will get thge result of query as list:
+
+```javascript
+users.onCompleted = function(e) {
+	if (e.success) {
+		e.data.forEach(function(data){
+			console.log(data);
+		});
+	}
+}
+```
+
+
+In case of errors:
+
+```javascript
+users.onError = function(e) {
+}
+```
+
+ 
+### Add data to collection
 
 Cloud Firestore stores data in Documents, which are stored in Collections. Cloud Firestore creates collections and documents implicitly the first time you add data to the document. You do not need to explicitly create collections or documents.
 
@@ -44,7 +83,7 @@ users.add({
 	"first" : "Ada",
 	"last" : "Miller",
 	"born" :  1962
- },	onComplete);
+ });
 ```
 Alternatively you can ommit the second paramter and can usea second paramter as callback listener.
 
@@ -61,9 +100,9 @@ users.add({
     	"middle" :  "Mathison",
     	"last" : "Turing",
     	"born" :  1912
-    }}, onComplete);
+    }});
 ```
-### Set data
+### Set data of collection
 
 To create or overwrite a single document, use the set() method:
 
@@ -75,16 +114,16 @@ users.set({
   		 "middle" :  "Mathison",
   	    "last" : "Turing",
        "born" :  1912
-  	}},	onComplete);
+  	}});
 ```
 With `add data` a new document will created, With `set data` youcan update an existing document or you can add and you can choose an own ID.
 
-### Update data
+### Update data 
 
 To update some fields of a document without overwriting the entire document, use the update() method:
 
 
-### Read data
+### Read data from collection
 
 The following example shows how to retrieve the contents of a single document using get():
 
@@ -99,10 +138,10 @@ user.get({
 		born : "≥1820",
 		first : "=Alan"
 	}	
-},onComplete);
+});
 ```
 
-### Listen data (realtime)
+### Listen data (realtime) from collection
 
 ```
 users.listen({
@@ -112,14 +151,14 @@ users.listen({
 	},
 	limit : 1,
 	orderBy : born
-},onComplete);
+});
 ```
 
 ### Delete data
 
 To delete a document, use the delete() method:
 ```
-users.delete(id,onComplete);
+users.delete(id);
 ```
 
 ### Secure your data
