@@ -120,7 +120,9 @@ To update some fields of a document without overwriting the entire document, use
 The following example shows how to retrieve the contents of a single document using get():
 
 ```
-user.get(id);
+user.get(id,function(e){
+	console.log(e.snaphot.getDocument());
+});
 ```
 
 
@@ -130,6 +132,9 @@ user.get({
 		born : "≥1820",
 		first : "=Alan"
 	}	
+},function(e){
+	const snapshots = e.snapshots;
+	const docs = snapshots.getDocuments();
 });
 ```
 
@@ -144,7 +149,9 @@ var listener = users.listen({
 	limit : 1,
 	orderBy : born
 }, function(e) {
-	console.log(e);
+		const snapshots = e.snapshots;
+		const docs = snapshots.getDocuments()		const chnanges = snapshots.getChanges();
+	}
 });
 
 ```
@@ -153,7 +160,8 @@ var listener = users.listen({
 When you are no longer interested in listening to your data, you must detach your listener so that your event callbacks stop getting called. This allows the client to stop using bandwidth to receive updates. You can use the unsubscribe function on onSnapshot() to stop listening to updates.
 
 ```javascript
-listener.
+listener.remove();
+```
 
 ### Delete data
 
