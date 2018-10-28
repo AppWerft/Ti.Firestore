@@ -27,9 +27,9 @@ import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.tasks.OnCompleteListener;
 
-
-@Kroll.module(parentModule = TifirestoreModule.class, propertyAccessors = { "onCompleted","onError" })
-public class CollectionReferenceProxy extends KrollProxy{
+@Kroll.module(parentModule = TifirestoreModule.class, propertyAccessors = {
+		"onCompleted", "onError" })
+public class CollectionReferenceProxy extends KrollProxy {
 
 	private String collectionName;
 	private KrollFunction Callback;
@@ -38,53 +38,75 @@ public class CollectionReferenceProxy extends KrollProxy{
 	private static final String LCAT = TifirestoreModule.LCAT;
 	private FirebaseFirestore db;
 
+	// Realtime listening of query:
 	private final class onSnapshotQueryListener implements
 			EventListener<QuerySnapshot> {
 		@Override
 		public void onEvent(@Nullable QuerySnapshot value,
-		                    @Nullable FirebaseFirestoreException e) {
-		    if (e != null) {
-		        Log.w(LCAT, "Listen failed.", e);
-		        return;
-		    }
-		    KrollDict event = new KrollDict();
-		    List<KrollDict> results = new ArrayList<KrollDict>();
-		    for (QueryDocumentSnapshot doc : value) {
-		    	KrollDict result = new KrollDict();
+				@Nullable FirebaseFirestoreException ex) {
+			KrollDict event = new KrollDict();
+			if (ex != null) {
+				Log.w(LCAT, "Listen failed.", ex);
+				event.put("code", ex.getCode());
+				event.put("message", ex.getMessage());
+				dispatchOnError(event);
+				return;
+			}
+
+			List<KrollDict> results = new ArrayList<KrollDict>();
+			for (QueryDocumentSnapshot doc : value) {
+				KrollDict result = new KrollDict();
 				try {
-					results.add(new KrollDict(
-							doc.toObject(JSONObject.class)));
-				} catch (JSONException ex) {
-					ex.printStackTrace();
+					results.add(new KrollDict(doc.toObject(JSONObject.class)));
+				} catch (JSONException jsonex) {
+					jsonex.printStackTrace();
 				}
-		    }
-		    event.put("data", results.toArray(new KrollDict[results.size()]));
-		    dispatchOnCompleted(event);
-		   
+			}
+			event.put("data", results.toArray(new KrollDict[results.size()]));
+
+			dispatchOnCompleted(event);
+
 		}
 	}
 
+	// Realtime listening of single Document:
 	private final class onSnapshotListener implements
 			EventListener<DocumentSnapshot> {
 		@Override
 		public void onEvent(@Nullable DocumentSnapshot snapshot,
-				@Nullable FirebaseFirestoreException e) {
-			if (e != null) {
-				Log.w(LCAT, "Listen failed.", e);
+				@Nullable FirebaseFirestoreException ex) {
+			KrollDict event = new KrollDict();
+			if (ex != null) {
+				event.put("code", ex.getCode());
+				event.put("message", ex.getMessage());
+				dispatchOnError(event);
 				return;
 			}
 			if (snapshot != null && snapshot.exists()) {
 				Log.d(LCAT, "Current data: " + snapshot.getData());
+				event.put("id", snapshot.getId());
+				event.put("hasPendingWrites", snapshot.getMetadata()
+						.hasPendingWrites());
+				event.put("isFromCache", snapshot.getMetadata().isFromCache());
+				KrollDict data = new KrollDict();
+				for (Map.Entry<String, Object> entry : snapshot.getData()
+						.entrySet()) {
+					data.put(entry.getKey(), entry.getValue());
+				}
+				event.put("data", data);
+				dispatchOnCompleted(event);
 			} else {
 				Log.d(LCAT, "Current data: null");
 			}
 		}
 	}
 
+	// getting of one single Document:
 	private final class onComplete implements
 			OnCompleteListener<DocumentSnapshot> {
 		@Override
 		public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+			KrollDict event = new KrollDict();
 			if (task.isSuccessful()) {
 				DocumentSnapshot documentSnapshot = task.getResult();
 				if (documentSnapshot.exists()) {
@@ -96,25 +118,32 @@ public class CollectionReferenceProxy extends KrollProxy{
 						result = new KrollDict(
 								documentSnapshot.toObject(JSONObject.class));
 					} catch (JSONException e) {
-
 						e.printStackTrace();
 					}
-					if (Callback != null)
-						Callback.call(getKrollObject(), result);
+					dispatchOnCompleted(result);
 				} else {
 					Log.d(LCAT, "No such document");
 				}
 			} else {
-				Log.d(LCAT, "get failed with ", task.getException());
+				event.put("message", task.getException().getMessage());
+				dispatchOnError(event);
+				return;
 			}
 		}
 	}
 
+	// query a set of results
 	private final class onQueryComplete implements
 			OnCompleteListener<QuerySnapshot> {
 		@Override
 		public void onComplete(@NonNull Task<QuerySnapshot> task) {
+			KrollDict result = new KrollDict();
 			if (task.isSuccessful()) {
+				result.put("hasPendingWrites", task.getResult().getMetadata()
+						.hasPendingWrites());
+				result.put("isFromCache", task.getResult().getMetadata()
+						.isFromCache());
+
 				ArrayList<JSONObject> list = new ArrayList<JSONObject>();
 				for (QueryDocumentSnapshot queryDocumentSnapshot : task
 						.getResult()) {
@@ -122,10 +151,11 @@ public class CollectionReferenceProxy extends KrollProxy{
 					Log.d(LCAT, "DocumentSnapshot data: "
 							+ queryDocumentSnapshot.getData());
 				}
-				if (Callback != null)
-					Callback.call(getKrollObject(), list.toArray());
+				result.put("data",list.toArray((new KrollDict[list.size()])));
+				dispatchOnCompleted(result);
 			} else {
-
+				result.put("message", task.getException().getMessage());
+				dispatchOnError(result);
 			}
 		}
 	}
@@ -133,11 +163,8 @@ public class CollectionReferenceProxy extends KrollProxy{
 	private final class onSetSuccess implements OnSuccessListener<Void> {
 		@Override
 		public void onSuccess(Void aVoid) {
-			KrollDict e = new KrollDict();
-			e.put("success", true);
-			e.put("action", "set");
-			if (Callback != null)
-				Callback.call(getKrollObject(), e);
+			KrollDict result = new KrollDict();
+			dispatchOnCompleted(result);
 		}
 	}
 
@@ -145,13 +172,9 @@ public class CollectionReferenceProxy extends KrollProxy{
 			OnSuccessListener<DocumentReference> {
 		@Override
 		public void onSuccess(DocumentReference documentReference) {
-			KrollDict e = new KrollDict();
-			e.put("success", true);
-			e.put("action", "add");
-			e.put("doc", new DocumentReferenceProxy(documentReference));
-			if (Callback != null)
-				Callback.call(getKrollObject(), e);
-
+			KrollDict result = new KrollDict();
+			result.put("doc", new DocumentReferenceProxy(documentReference));
+			dispatchOnCompleted(result);
 		}
 	}
 
@@ -161,13 +184,10 @@ public class CollectionReferenceProxy extends KrollProxy{
 			KrollDict e = new KrollDict();
 			e.put("success", false);
 			e.put("message", ex.getMessage());
-			if (Callback != null)
-				Callback.call(getKrollObject(), e);
+			dispatchOnError(e);
 		}
 	}
-
-	
-	
+	// end of callbacks
 	
 	
 	
@@ -259,8 +279,8 @@ public class CollectionReferenceProxy extends KrollProxy{
 			return;
 		}
 		CollectionReference collRef = db.collection(collectionName);
-		
-		// getting/listening for  one document:
+
+		// getting/listening for one document:
 		if ((args[0] instanceof String)) {
 			String id = (String) args[0];
 			DocumentReference docref = collRef.document(id);
@@ -285,8 +305,7 @@ public class CollectionReferenceProxy extends KrollProxy{
 				KrollDict where = (KrollDict) o;
 				for (String key : opts.keySet()) {
 					final String value = opts.getString(key);
-					collRef = parseAndBuildQuery(key, value,
-							collRef);
+					collRef = parseAndBuildQuery(key, value, collRef);
 				}
 			}
 
@@ -296,8 +315,7 @@ public class CollectionReferenceProxy extends KrollProxy{
 					.getString("orderBy"));
 		}
 		if (opts.containsKeyAndNotNull("limit")) {
-			collRef = (CollectionReference) collRef.limit(opts
-					.getInt("limit"));
+			collRef = (CollectionReference) collRef.limit(opts.getInt("limit"));
 		}
 		switch (QUERYTYPE) {
 		case GET:
@@ -347,17 +365,25 @@ public class CollectionReferenceProxy extends KrollProxy{
 			return;
 		Callback = (KrollFunction) o;
 	}
-	
-	
+
 	private void dispatchOnCompleted(KrollDict event) {
 		KrollFunction onverificationcompleted = (KrollFunction) getProperty("onCompleted");
 		if (onverificationcompleted != null) {
 			onverificationcompleted.call(getKrollObject(),
 					new Object[] { event });
 		}
-
 		if (this.hasListeners("completed")) {
-			this.fireEvent("completed", event);
+			this.fireEvent("completed", new Object[] { event });
+		}
+	}
+
+	private void dispatchOnError(KrollDict event) {
+		KrollFunction onError = (KrollFunction) getProperty("onError");
+		if (onError != null) {
+			onError.call(getKrollObject(), new Object[] { event });
+		}
+		if (this.hasListeners("error")) {
+			this.fireEvent("error", new Object[] { event });
 		}
 	}
 }
