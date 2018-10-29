@@ -171,7 +171,7 @@ public class CollectionReferenceProxy extends KrollProxy {
 			Log.e(LCAT, "second arg of getter/listener must be a callback");
 			return null;
 		}
-		KrollFunction Callback = (KrollFunction) args[1];
+		final KrollFunction Callback = (KrollFunction) args[1];
 
 		CollectionReference collRef = db.collection(collectionName);
 		// getting/listening for one document:
