@@ -43,6 +43,38 @@ public class CollectionReferenceProxy extends KrollProxy {
 	private FirebaseFirestore db;
 
 
+	private final class onSetSuccess implements OnSuccessListener<Void> {
+		@Override
+		public void onSuccess(Void aVoid) {
+			KrollDict result = new KrollDict();
+			dispatchOnCompleted(result);
+		}
+	}
+
+	private final class onAddSuccess implements
+			OnSuccessListener<DocumentReference> {
+		@Override
+		public void onSuccess(DocumentReference documentReference) {
+			KrollDict result = new KrollDict();
+			result.put("id", documentReference.getId());
+			result.put("path", documentReference.getPath());
+			result.put("path", documentReference.getPath());
+			dispatchOnCompleted(result);
+		}
+	}
+
+	private final class onFailure implements OnFailureListener {
+		@Override
+		public void onFailure(@NonNull Exception ex) {
+			KrollDict e = new KrollDict();
+			e.put("success", false);
+			e.put("message", ex.getMessage());
+			dispatchOnError(e);
+		}
+	}
+
+	// end of callbacks
+
 	public CollectionReferenceProxy() {
 		db = FirebaseFirestore.getInstance();
 	}
