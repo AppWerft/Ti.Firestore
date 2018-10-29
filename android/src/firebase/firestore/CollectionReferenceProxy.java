@@ -1,32 +1,35 @@
 package firebase.firestore;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import org.appcelerator.kroll.KrollDict;
 import org.appcelerator.kroll.KrollFunction;
 import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.KrollProxy;
 import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.kroll.common.Log;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import com.google.firebase.firestore.*;
-import com.google.firebase.firestore.DocumentChange.Type;
-import com.google.firebase.*;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
-import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentChange;
+import com.google.firebase.firestore.DocumentChange.Type;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
 
 @Kroll.module(parentModule = TifirestoreModule.class, propertyAccessors = {
 		"onCompleted", "onError" })
@@ -39,139 +42,6 @@ public class CollectionReferenceProxy extends KrollProxy {
 	private static final String LCAT = TifirestoreModule.LCAT;
 	private FirebaseFirestore db;
 
-	// Realtime listening of query:
-	private final class onSnapshotQueryListener implements
-			EventListener<QuerySnapshot> {
-		@Override
-		public void onEvent(@Nullable QuerySnapshot snapshots,
-				@Nullable FirebaseFirestoreException ex) {
-			KrollDict event = new KrollDict();
-			if (ex != null) {
-				event.put("code", ex.getCode());
-				event.put("message", ex.getMessage());
-				dispatchOnError(event);
-				return;
-			}
-			
-			List<DocumentSnapshotProxy> results = new ArrayList<DocumentSnapshotProxy>();
-		
-			for (DocumentChange dc : snapshots.getDocumentChanges()) {
-                if (dc.getType() == Type.ADDED) {
-                }
-            }
-
-			
-			
-			for (QueryDocumentSnapshot snapshot : snapshots) {
-				results.add(new DocumentSnapshotProxy(snapshot));
-			}
-			event.put("hasPendingWrites", snapshots.getMetadata()
-					.hasPendingWrites());
-			event.put("isFromCache", snapshots.getMetadata().isFromCache());
-			event.put("data", results.toArray(new KrollDict[results.size()]));
-			dispatchOnCompleted(event);
-		}
-	}
-
-	// Realtime listening of single Document:
-	private final class onSnapshotListener implements
-			EventListener<DocumentSnapshot> {
-		@Override
-		public void onEvent(@Nullable DocumentSnapshot snapshot,
-				@Nullable FirebaseFirestoreException ex) {
-			KrollDict event = new KrollDict();
-			if (ex != null) {
-				event.put("code", ex.getCode());
-				event.put("message", ex.getMessage());
-				dispatchOnError(event);
-				return;
-			}
-			if (snapshot != null && snapshot.exists()) {
-				event.put("data", new DocumentSnapshotProxy(snapshot));
-				dispatchOnCompleted(event);
-			} else {
-				Log.d(LCAT, "Current data: null");
-			}
-		}
-	}
-
-	// getting of one single Document:
-	private final class onComplete implements
-			OnCompleteListener<DocumentSnapshot> {
-		@Override
-		public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-			KrollDict event = new KrollDict();
-			if (task.isSuccessful()) {
-				DocumentSnapshot snapshot = task.getResult();
-				if (snapshot.exists()) {
-					event.put("data", new DocumentSnapshotProxy(snapshot));
-					dispatchOnCompleted(event);
-				} else {
-					Log.d(LCAT, "No such document");
-				}
-			} else {
-				event.put("message", task.getException().getMessage());
-				dispatchOnError(event);
-				return;
-			}
-		}
-	}
-
-	// query a set of results
-	private final class onQueryComplete implements
-			OnCompleteListener<QuerySnapshot> {
-		@Override
-		public void onComplete(@NonNull Task<QuerySnapshot> task) {
-			KrollDict result = new KrollDict();
-			if (task.isSuccessful()) {
-				result.put("hasPendingWrites", task.getResult().getMetadata()
-						.hasPendingWrites());
-				result.put("isFromCache", task.getResult().getMetadata()
-						.isFromCache());
-				ArrayList<DocumentSnapshotProxy> list = new ArrayList<DocumentSnapshotProxy>();
-				for (QueryDocumentSnapshot snapshot : task.getResult()) {
-					list.add(new DocumentSnapshotProxy(snapshot));
-				}
-				result.put("data", list.toArray((new KrollDict[list.size()])));
-				dispatchOnCompleted(result);
-			} else {
-				result.put("message", task.getException().getMessage());
-				dispatchOnError(result);
-			}
-		}
-	}
-
-	private final class onSetSuccess implements OnSuccessListener<Void> {
-		@Override
-		public void onSuccess(Void aVoid) {
-			KrollDict result = new KrollDict();
-			dispatchOnCompleted(result);
-		}
-	}
-
-	private final class onAddSuccess implements
-			OnSuccessListener<DocumentReference> {
-		@Override
-		public void onSuccess(DocumentReference documentReference) {
-			KrollDict result = new KrollDict();
-			result.put("id", documentReference.getId());
-			result.put("path", documentReference.getPath());
-			result.put("path", documentReference.getPath());
-			dispatchOnCompleted(result);
-		}
-	}
-
-	private final class onFailure implements OnFailureListener {
-		@Override
-		public void onFailure(@NonNull Exception ex) {
-			KrollDict e = new KrollDict();
-			e.put("success", false);
-			e.put("message", ex.getMessage());
-			dispatchOnError(e);
-		}
-	}
-
-	// end of callbacks
 
 	public CollectionReferenceProxy() {
 		db = FirebaseFirestore.getInstance();
@@ -255,25 +125,74 @@ public class CollectionReferenceProxy extends KrollProxy {
 		return prepareAndStartQuery(args, LISTEN);
 	}
 
+	// first arg: String (one document) or KrollDict (query with a couple of
+	// documents)
+	// second arg: KrollFunction
+	// result: a listenerRef for detaching listening
 	private ListenerRegistrationProxy prepareAndStartQuery(Object[] args,
 			int QUERYTYPE) {
-		if (args.length < 1) {
-			Log.e(LCAT, "get() needs minimal one parameter");
+		if (args.length < 2) {
+			Log.e(LCAT, "Getter and listener needs two args");
 			return null;
 		}
-		CollectionReference collRef = db.collection(collectionName);
+		if (!(args[1] instanceof KrollFunction)) {
+			Log.e(LCAT, "second arg of getter/listener must be a callback");
+			return null;
+		}
+		KrollFunction Callback = (KrollFunction) args[1];
 
+		CollectionReference collRef = db.collection(collectionName);
 		// getting/listening for one document:
 		if ((args[0] instanceof String)) {
 			String id = (String) args[0];
-			DocumentReference docref = collRef.document(id);
+			final DocumentReference docref = collRef.document(id);
 			switch (QUERYTYPE) {
 			case GET:
-				docref.get().addOnCompleteListener(new onComplete());
+				docref.get().addOnCompleteListener(
+						new OnCompleteListener<DocumentSnapshot>() {
+							@Override
+							public void onComplete(
+									@NonNull Task<DocumentSnapshot> task) {
+								KrollDict event = new KrollDict();
+								if (task.isSuccessful()) {
+									DocumentSnapshot snapshot = task
+											.getResult();
+									if (snapshot.exists()) {
+										event.put("snapshot",
+												new DocumentSnapshotProxy(
+														snapshot));
+									} else {
+										event.put("snapshot", null);
+										Log.d(LCAT, "No such document");
+									}
+								} else {
+									event.put("message", task.getException()
+											.getMessage());
+								}
+								Callback.call(getKrollObject(), event);
+							}
+						});
 				return null;
 			case LISTEN:
 				ListenerRegistration registration = docref
-						.addSnapshotListener(new onSnapshotListener());
+						.addSnapshotListener(new EventListener<DocumentSnapshot>() {
+							@Override
+							public void onEvent(@Nullable DocumentSnapshot snapshot,
+									@Nullable FirebaseFirestoreException ex) {
+								KrollDict event = new KrollDict();
+								if (ex != null) {
+									event.put("code", ex.getCode());
+									event.put("message", ex.getMessage());
+									return;
+								}
+								if (snapshot != null && snapshot.exists()) {
+									event.put("snapshot", new DocumentSnapshotProxy(snapshot));
+								} else {
+									event.put("snapshot",null);
+								}
+								Callback.call(getKrollObject(), event);
+							}
+						});
 				return new ListenerRegistrationProxy(registration);
 			}
 			return null;
@@ -303,14 +222,43 @@ public class CollectionReferenceProxy extends KrollProxy {
 		}
 		switch (QUERYTYPE) {
 		case GET:
-			collRef.get().addOnCompleteListener(new onQueryComplete());
+			collRef.get().addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+				@Override
+				public void onComplete(@NonNull Task<QuerySnapshot> task) {
+					KrollDict event = new KrollDict();
+					if (task.isSuccessful()) {
+						ArrayList<DocumentSnapshotProxy> list = new ArrayList<DocumentSnapshotProxy>();
+						for (QueryDocumentSnapshot snapshot : task.getResult()) {
+							list.add(new DocumentSnapshotProxy(snapshot));
+						}
+						event.put("snapshots", list.toArray((new KrollDict[list.size()])));
+					} else {
+						event.put("message", task.getException().getMessage());
+					}
+					Callback.call(getKrollObject(), event);
+				}
+			});
 			return null;
 		case LISTEN:
 			ListenerRegistration registration = collRef
-					.addSnapshotListener(new onSnapshotQueryListener());
+					.addSnapshotListener(new EventListener<QuerySnapshot>() {
+						@Override
+						public void onEvent(@Nullable QuerySnapshot snapshots,
+								@Nullable FirebaseFirestoreException ex) {
+							KrollDict event = new KrollDict();
+							if (ex != null) {
+								event.put("code", ex.getCode());
+								event.put("message", ex.getMessage());
+							} else {
+							event.put("success", true);
+							event.put("snapshots", new QuerySnapshotProxy(snapshots));
+							}
+							Callback.call(getKrollObject(), event);
+						}
+					});
 			return new ListenerRegistrationProxy(registration);
 		}
-		return  null;
+		return null;
 	}
 
 	/* helper for transform JS object to query */
